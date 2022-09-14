@@ -1,12 +1,12 @@
-#include "kukaRobotDevice.h"
+#include "staubliRobotDevice.h"
 
 #include "mitkIGTTimeStamp.h"
 
-#include "lancetKukaTrackingDeviceTypeInformation.h"
+#include "lancetstaubliTrackingDeviceTypeInformation.h"
 
 #define d2r 57.2957795130
 
-bool KukaRobotDevice::OpenConnection()
+bool StaubliRobotDevice::OpenConnection()
 {
 	m_RobotApi.connectrobot();
 	if (GetState() == Ready)
@@ -24,14 +24,14 @@ bool KukaRobotDevice::OpenConnection()
 	return true;
 }
 
-bool KukaRobotDevice::CloseConnection()
+bool StaubliRobotDevice::CloseConnection()
 {
 	m_RobotApi.disconnectrobot();
 	SetState(TrackingDeviceState::Setup);
 	return !m_IsConnected;
 }
 
-bool KukaRobotDevice::StartTracking()
+bool StaubliRobotDevice::StartTracking()
 {
 	if (this->GetState() != Ready)
 		return false;
@@ -41,37 +41,37 @@ bool KukaRobotDevice::StartTracking()
 	this->m_StopTracking = false;
 	this->m_StopTrackingMutex.unlock();
 
-	m_Thread = std::thread(&KukaRobotDevice::ThreadStartTracking, this);//todo start tracking agine crash here 
+	m_Thread = std::thread(&StaubliRobotDevice::ThreadStartTracking, this);//todo start tracking agine crash here 
 	// start a new thread that executes the TrackTools() method
 	mitk::IGTTimeStamp::GetInstance()->Start(this);
-	MITK_INFO << "lancet kuka robot start tracking";
+	MITK_INFO << "lancet staubli robot start tracking";
 	return true;
 }
 
-mitk::TrackingTool* KukaRobotDevice::GetTool(unsigned toolNumber) const
+mitk::TrackingTool* StaubliRobotDevice::GetTool(unsigned toolNumber) const
 {
 	std::lock_guard<std::mutex> lock(m_ToolsMutex); // lock and unlock the mutex
-	if (toolNumber < m_KukaEndEffectors.size())
-		return m_KukaEndEffectors.at(toolNumber);
+	if (toolNumber < m_StaubliEndEffectors.size())
+		return m_StaubliEndEffectors.at(toolNumber);
 	return nullptr;
 }
 
-mitk::TrackingTool* KukaRobotDevice::GetToolByName(std::string name) const
+mitk::TrackingTool* StaubliRobotDevice::GetToolByName(std::string name) const
 {
 	std::lock_guard<std::mutex> lock(m_ToolsMutex); // lock and unlock the mutex
-	auto end = m_KukaEndEffectors.end();
-	for (auto iterator = m_KukaEndEffectors.begin(); iterator != end; ++iterator)
+	auto end = m_StaubliEndEffectors.end();
+	for (auto iterator = m_StaubliEndEffectors.begin(); iterator != end; ++iterator)
 		if (name.compare((*iterator)->GetToolName()) == 0)
 			return *iterator;
 	return nullptr;
 }
 
-mitk::TrackingTool* KukaRobotDevice::GetInternalTool()
+mitk::TrackingTool* StaubliRobotDevice::GetInternalTool()
 {
-	return m_KukaEndEffectors[0]; //only 1 end effector tracked;
+	return m_StaubliEndEffectors[0]; //only 1 end effector tracked;
 }
 
-mitk::TrackingTool* KukaRobotDevice::AddTool(const char* toolName, const char* fileName)
+mitk::TrackingTool* StaubliRobotDevice::AddTool(const char* toolName, const char* fileName)
 {
 	mitk::TrackingTool::Pointer t = mitk::TrackingTool::New();
 	t->SetToolName(toolName);
@@ -84,29 +84,29 @@ mitk::TrackingTool* KukaRobotDevice::AddTool(const char* toolName, const char* f
 	return t.GetPointer();
 }
 
-unsigned KukaRobotDevice::GetToolCount() const
+unsigned StaubliRobotDevice::GetToolCount() const
 {
-	return static_cast<unsigned int>(this->m_KukaEndEffectors.size());
+	return static_cast<unsigned int>(this->m_StaubliEndEffectors.size());
 }
 
-void KukaRobotDevice::TrackTools()
+void StaubliRobotDevice::TrackTools()
 {
 	m_RobotApi.requestrealtimedata();
 	m_TrackingData[0] = m_RobotApi.realtime_data.pose.x;
 	m_TrackingData[1] = m_RobotApi.realtime_data.pose.y;
 	m_TrackingData[2] = m_RobotApi.realtime_data.pose.z;
 
-	m_TrackingData[3] = m_RobotApi.realtime_data.pose.a;
-	m_TrackingData[4] = m_RobotApi.realtime_data.pose.b;
-	m_TrackingData[5] = m_RobotApi.realtime_data.pose.c;
+	m_TrackingData[3] = m_RobotApi.realtime_data.pose.rx;
+	m_TrackingData[4] = m_RobotApi.realtime_data.pose.ry;
+	m_TrackingData[5] = m_RobotApi.realtime_data.pose.rz;
 }
 
-std::array<double, 6> KukaRobotDevice::GetTrackingData()
+std::array<double, 6> StaubliRobotDevice::GetTrackingData()
 {
 	return m_TrackingData;
 }
 
-bool KukaRobotDevice::RequestExecOperate(const QString& funname, const QStringList& param)
+bool StaubliRobotDevice::RequestExecOperate(const QString& funname, const QStringList& param)
 {
 	MITK_INFO << "ExecOperateFunc " << funname.toStdString();
 	for (auto string : param)
@@ -146,47 +146,47 @@ bool KukaRobotDevice::RequestExecOperate(const QString& funname, const QStringLi
 			param.at(5).toDouble());
 		return true;
 	}
-	else if (funname.indexOf("setworkmode") != -1 && param.size() == 1)
-	{
-		QThread::msleep(300);
-		this->m_RobotApi.setworkmode(param.at(0).toInt());
-		return true;
-	}
-	else if (funname.indexOf("setTcpNum") != -1 && param.size() == 2)
-	{
-		QThread::msleep(300);
-		this->m_RobotApi.setTcpNum(param.at(0).toInt(), param.at(1).toInt());
-		return true;
-	}
-	else if (funname.indexOf("setio") != -1 && param.size() == 2)
-	{
-		this->m_RobotApi.setio(param.at(0).toInt(), param.at(1).toInt());
-		return true;
-	}
-	else if (funname.indexOf("update") != -1 && param.size() == 0)
-	{
-		//emit this->(this->devicename(), this->realtimeData());
-		MITK_ERROR << "not support";
-		return false;
-	}
-	else if (funname.toLower().indexOf("applytcpvalue") != -1 && param.size() == 6)
-	{
-		qInfo() << "call movel function " << this->RequestExecOperate("movel", param) << " param " << param;
-		QThread::msleep(1000);
-		qInfo() << "call setworkmode 1-11 function " << this->RequestExecOperate("setworkmode", { "11" });
-		QThread::msleep(1000);
-		qInfo() << "call setworkmode 1-5 function " << this->RequestExecOperate("setworkmode", { "5" });
-		QThread::msleep(1000);
-		return true;
-	}
+	//else if (funname.indexOf("setworkmode") != -1 && param.size() == 1)
+	//{
+	//	QThread::msleep(300);
+	//	this->m_RobotApi.setworkmode(param.at(0).toInt());
+	//	return true;
+	//}
+	//else if (funname.indexOf("setTcpNum") != -1 && param.size() == 2)
+	//{
+	//	QThread::msleep(300);
+	//	this->m_RobotApi.setTcpNum(param.at(0).toInt(), param.at(1).toInt());
+	//	return true;
+	//}
+	//else if (funname.indexOf("setio") != -1 && param.size() == 2)
+	//{
+	//	this->m_RobotApi.setio(param.at(0).toInt(), param.at(1).toInt());
+	//	return true;
+	//}
+	//else if (funname.indexOf("update") != -1 && param.size() == 0)
+	//{
+	//	//emit this->(this->devicename(), this->realtimeData());
+	//	MITK_ERROR << "not support";
+	//	return false;
+	//}
+	//else if (funname.toLower().indexOf("applytcpvalue") != -1 && param.size() == 6)
+	//{
+	//	qInfo() << "call movel function " << this->RequestExecOperate("movel", param) << " param " << param;
+	//	QThread::msleep(1000);
+	//	qInfo() << "call setworkmode 1-11 function " << this->RequestExecOperate("setworkmode", { "11" });
+	//	QThread::msleep(1000);
+	//	qInfo() << "call setworkmode 1-5 function " << this->RequestExecOperate("setworkmode", { "5" });
+	//	QThread::msleep(1000);
+	//	return true;
+	//}
 	return false;
 }
 
-KukaRobotDevice::KukaRobotDevice()
+StaubliRobotDevice::StaubliRobotDevice()
 	:TrackingDevice()
 {
-	m_Data = lancet::KukaRobotTypeInformation::GetDeviceDataLancetKukaTrackingDevice();
-	m_KukaEndEffectors.clear();
+	m_Data = lancet::StaubliRobotTypeInformation::GetDeviceDataLancetStaubliTrackingDevice();
+	m_StaubliEndEffectors.clear();
 	//udp service
 	m_udp.setRepetitiveHeartbeatInterval(500);
 	m_udp.setRemoteHostPort(m_RemotePort.toUInt());
@@ -202,11 +202,11 @@ KukaRobotDevice::KukaRobotDevice()
 	 // this, SLOT(IsRobotConnected(bool)));//todo BUGFIX
 }
 
-KukaRobotDevice::~KukaRobotDevice()
+StaubliRobotDevice::~StaubliRobotDevice()
 {
 }
 
-bool KukaRobotDevice::InternalAddTool(mitk::TrackingTool* tool)
+bool StaubliRobotDevice::InternalAddTool(mitk::TrackingTool* tool)
 {
 	MITK_INFO << "InternalAddTool Called!!!!";
 	if (tool == nullptr)
@@ -222,7 +222,7 @@ bool KukaRobotDevice::InternalAddTool(mitk::TrackingTool* tool)
 		//todo add tool tcp to robot
 		/* now that the tool is added to the device, add it to list too */
 		m_ToolsMutex.lock();
-		this->m_KukaEndEffectors.push_back(p);
+		this->m_StaubliEndEffectors.push_back(p);
 		m_ToolsMutex.unlock();
 		this->Modified();
 		return true;
@@ -232,7 +232,7 @@ bool KukaRobotDevice::InternalAddTool(mitk::TrackingTool* tool)
 		MITK_INFO << "State Setup";
 		/* In Setup mode, we only add it to the list, so that OpenConnection() can add it later */
 		m_ToolsMutex.lock();
-		this->m_KukaEndEffectors.push_back(p);
+		this->m_StaubliEndEffectors.push_back(p);
 		m_ToolsMutex.unlock();
 		this->Modified();
 		return true;
@@ -241,7 +241,7 @@ bool KukaRobotDevice::InternalAddTool(mitk::TrackingTool* tool)
 		return false;
 }
 
-void KukaRobotDevice::IsRobotConnected(bool isConnect)
+void StaubliRobotDevice::IsRobotConnected(bool isConnect)
 {
 	m_IsConnected = isConnect;
 	if (isConnect)
@@ -257,7 +257,7 @@ void KukaRobotDevice::IsRobotConnected(bool isConnect)
 	}
 }
 
-void KukaRobotDevice::heartbeatThreadWorker(KukaRobotDevice* _this)
+void StaubliRobotDevice::heartbeatThreadWorker(StaubliRobotDevice* _this)
 {
 	while (_this->m_IsConnected == true)
 	{
@@ -266,7 +266,7 @@ void KukaRobotDevice::heartbeatThreadWorker(KukaRobotDevice* _this)
 	}
 }
 
-void KukaRobotDevice::ThreadStartTracking()
+void StaubliRobotDevice::ThreadStartTracking()
 {
 	MITK_INFO << "tracktools called";
 	/* lock the TrackingFinishedMutex to signal that the execution rights are now transfered to the tracking thread */
@@ -292,21 +292,21 @@ void KukaRobotDevice::ThreadStartTracking()
 		m_TrackingData[1] = m_RobotApi.realtime_data.pose.y;
 		m_TrackingData[2] = m_RobotApi.realtime_data.pose.z;
 
-		m_TrackingData[3] = m_RobotApi.realtime_data.pose.a;
-		m_TrackingData[4] = m_RobotApi.realtime_data.pose.b;
-		m_TrackingData[5] = m_RobotApi.realtime_data.pose.c;
+		m_TrackingData[3] = m_RobotApi.realtime_data.pose.rx;
+		m_TrackingData[4] = m_RobotApi.realtime_data.pose.ry;
+		m_TrackingData[5] = m_RobotApi.realtime_data.pose.rz;
 
 		Eigen::Quaterniond q;
 		//kuka
-		Eigen::AngleAxisd rx(m_TrackingData[3] / d2r, Eigen::Vector3d::UnitZ());
-		Eigen::AngleAxisd ry(m_TrackingData[4] / d2r, Eigen::Vector3d::UnitY());
-		Eigen::AngleAxisd rz(m_TrackingData[5] / d2r, Eigen::Vector3d::UnitX());
+		// Eigen::AngleAxisd rx(m_TrackingData[3] / d2r, Eigen::Vector3d::UnitZ());
+		// Eigen::AngleAxisd ry(m_TrackingData[4] / d2r, Eigen::Vector3d::UnitY());
+		// Eigen::AngleAxisd rz(m_TrackingData[5] / d2r, Eigen::Vector3d::UnitX());
 		//return rz.matrix()*ry.matrix()*rx.matrix(); // kuka
 
 		//Staubli
-		// Eigen::AngleAxisd rx(rxyz(0, 0) / d2r, Eigen::Vector3d::UnitX());
-		// Eigen::AngleAxisd ry(rxyz(1, 0) / d2r, Eigen::Vector3d::UnitY());
-		// Eigen::AngleAxisd rz(rxyz(2, 0) / d2r, Eigen::Vector3d::UnitZ());
+		Eigen::AngleAxisd rx(m_TrackingData[3] / d2r, Eigen::Vector3d::UnitX());
+		Eigen::AngleAxisd ry(m_TrackingData[4] / d2r, Eigen::Vector3d::UnitY());
+		Eigen::AngleAxisd rz(m_TrackingData[5] / d2r, Eigen::Vector3d::UnitZ());
 		//return rx.matrix()*ry.matrix()*rz.matrix(); // staubli
 		q = rx * ry * rz;
 

@@ -104,7 +104,7 @@ void RobotView::ConnectDevice()
     mitk::NavigationDataSource* navigationDataSource = context->GetService<
       mitk::NavigationDataSource>(refs.front());
 
-    auto deviceSource = dynamic_cast<mitk::TrackingDeviceSource*>(navigationDataSource);
+	auto deviceSource = dynamic_cast<mitk::TrackingDeviceSource*>(navigationDataSource);
     if (deviceSource != nullptr && deviceSource->GetTrackingDevice().IsNotNull())
     {
       auto device = deviceSource->GetTrackingDevice();

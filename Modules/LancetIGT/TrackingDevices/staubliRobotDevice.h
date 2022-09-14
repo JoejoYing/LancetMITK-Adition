@@ -1,5 +1,5 @@
-#ifndef KUKAROBOTDEVICE_H
-#define KUKAROBOTDEVICE_H
+#ifndef STAUBLIROBOTDEVICE_H
+#define STAUBLIROBOTDEVICE_H
 //mitk
 #include <mitkCommon.h>
 #include <mitkTrackingDevice.h>
@@ -17,26 +17,26 @@
 
 #include "mitkTrackingTool.h"
 
-//KUKA ROBOT API
-#include "robotapi.h"
+//STAUBLI ROBOT API
+#include "robotapi_staubli.h"
 #include "udpsocketrobotheartbeat.h" //udp
 
 /** Documentation
-  * \brief superclass for specific KUKA Robot Devices that use socket communication.
+  * \brief superclass for specific STAUBLI Robot Devices that use socket communication.
   *
-  * implements the TrackingDevice interface for Kuka robot devices ()
+  * implements the TrackingDevice interface for STAUBLI robot devices ()
   *
   * \ingroup Robot
  */
-class MITKLANCETIGT_EXPORT  KukaRobotDevice :public QObject, public  mitk::TrackingDevice
+class MITKLANCETIGT_EXPORT  StaubliRobotDevice :public QObject, public  mitk::TrackingDevice
 {
 	Q_OBJECT
 public:
-	mitkClassMacro(KukaRobotDevice, TrackingDevice);
+	mitkClassMacro(StaubliRobotDevice, TrackingDevice);
 	itkFactorylessNewMacro(Self);
 	itkCloneMacro(Self);
 
-	typedef std::vector<mitk::TrackingTool::Pointer> KukaEndEffectorContainerType;
+	typedef std::vector<mitk::TrackingTool::Pointer> StaubliEndEffectorContainerType;//末端执行器容器类型
 
 	itkGetMacro(IsConnected, bool);
 	/**
@@ -63,7 +63,7 @@ public:
 	mitk::TrackingTool* GetTool(unsigned toolNumber) const override;
 	mitk::TrackingTool* GetToolByName(std::string name) const override;
 
-	mitk::TrackingTool* GetInternalTool();
+	mitk::TrackingTool* GetInternalTool();//获取内部工具
 
 	mitk::TrackingTool* AddTool(const char* toolName, const char* fileName);
 	unsigned GetToolCount() const override;
@@ -76,11 +76,11 @@ public:
 	bool RequestExecOperate(const QString& funname, const QStringList& param);
 
 protected:
-	KukaRobotDevice();
-	virtual ~KukaRobotDevice() override;
+	StaubliRobotDevice();
+	virtual ~StaubliRobotDevice() override;
 
 	/**
-	  * \brief Add a kuka end effector tool to the list of tracked tools and add tool tcp to robot. This method is used by AddTool
+	  * \brief Add a staubli end effector tool to the list of tracked tools and add tool tcp to robot. This method is used by AddTool
 	  * @throw mitk::IGTHardwareException Throws an exception if there are errors while adding the tool.
 	  * \warning adding tools is not possible in tracking mode, only in setup and ready.
 	  */
@@ -90,7 +90,7 @@ private slots:
 	void IsRobotConnected(bool isConnect);
 
 private:
-	static void heartbeatThreadWorker(KukaRobotDevice* _this);
+	static void heartbeatThreadWorker(StaubliRobotDevice* _this);
 	void ThreadStartTracking();
 private:
 	bool m_IsConnected = false;
@@ -100,18 +100,18 @@ private:
 
 	//track
 	mutable std::mutex m_ToolsMutex; ///< mutex for coordinated access of tool container
-	KukaEndEffectorContainerType m_KukaEndEffectors; ///< container for all tracking tools
-	///< creates tracking thread that continuously polls serial interface for new tracking data
+	StaubliEndEffectorContainerType m_StaubliEndEffectors; ///< container for all tracking tools
+	///< creates tracking thread that continuously polls serial interface for new tracking data 创建跟踪线程，连续轮询串行接口以获取新的跟踪数据
 	std::thread m_Thread;                            ///< ID of tracking thread
 
 	//Robot
 	RobotApi m_RobotApi;
 	//Device Configure
-	std::string m_IpAddress{ "172.31.1.148" };
-	QString m_Port{ "30300" };
+	std::string m_IpAddress{ "172.31.1.147" };
+	QString m_Port{ "69999" };
 	std::string m_RemoteIpAddress{ "172.31.1.147" };
-	QString m_RemotePort{ "30300" };
-	std::string m_DeviceName{ "Kuka" };
+	QString m_RemotePort{ "69999" };
+	std::string m_DeviceName{ "Staubli" };
 
 	//communication
 	UdpSocketRobotHeartbeat m_udp;
@@ -121,4 +121,5 @@ private:
 
 
 
-#endif // KUKAROBOTDEVICE_H
+#endif // STAUBLIROBOTDEVICE_H
+

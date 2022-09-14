@@ -16,7 +16,9 @@ found in the LICENSE file.
 #include <mitkTrackingDeviceWidgetCollection.h>
 //All Tracking devices, which should be available by default
 #include "lancetKukaTrackingDeviceTypeInformation.h"
+#include "lancetStaubliTrackingDeviceTypeInformation.h"
 #include "UI/QmitkLancetKukaWidget.h"
+#include "UI/QmitkLancetStaubliWidget.h"
 
 //micro service
 #include <usGetModuleContext.h>
@@ -47,6 +49,7 @@ namespace lancet
     mitk::TrackingDeviceTypeCollection* m_DeviceTypeCollection = context->GetService<
       mitk::TrackingDeviceTypeCollection>(refs.front());
     m_DeviceTypeCollection->RegisterTrackingDeviceType(new lancet::KukaRobotTypeInformation());
+	m_DeviceTypeCollection->RegisterTrackingDeviceType(new lancet::StaubliRobotTypeInformation());
 
     //widget
     std::vector<us::ServiceReference<mitk::TrackingDeviceWidgetCollection> > refs_widget = context->GetServiceReferences<mitk::TrackingDeviceWidgetCollection>();
@@ -57,6 +60,7 @@ namespace lancet
     mitk::TrackingDeviceWidgetCollection* m_DeviceWidgetCollection = context->GetService<
       mitk::TrackingDeviceWidgetCollection>(refs_widget.front());
     m_DeviceWidgetCollection->RegisterTrackingDeviceWidget(lancet::KukaRobotTypeInformation::GetTrackingDeviceName(),new QmitkLancetKukaWidget);
+	m_DeviceWidgetCollection->RegisterTrackingDeviceWidget(lancet::StaubliRobotTypeInformation::GetTrackingDeviceName(), new QmitkLancetStaubliWidget);
   }
 
   void LancetIGTActivator::Unload(us::ModuleContext*)

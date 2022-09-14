@@ -67,7 +67,7 @@ public slots:
 	
 private:
 	KukaRobotDevice::Pointer m_device;
-  UdpSocketRobotHeartbeat m_udp;
+	UdpSocketRobotHeartbeat m_udp;
 	QTimer m_timer;
 	
 	Ui::StaubilWidget m_Controls;

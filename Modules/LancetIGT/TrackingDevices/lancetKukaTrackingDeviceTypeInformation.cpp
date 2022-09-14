@@ -1,5 +1,5 @@
 #include "lancetKukaTrackingDeviceTypeInformation.h"
-#include "kukaRobotDevice.h"
+#include "StaubliRobotDevice.h"
 #include "LancetVegaTrackingDevice.h"
 
 namespace lancet
@@ -29,7 +29,7 @@ namespace lancet
     {
         
         mitk::TrackingDeviceSource::Pointer returnValue = mitk::TrackingDeviceSource::New();
-        KukaRobotDevice::Pointer thisDevice = dynamic_cast<KukaRobotDevice*>(trackingDevice.GetPointer());
+        StaubliRobotDevice::Pointer thisDevice = dynamic_cast<StaubliRobotDevice*>(trackingDevice.GetPointer());
         *toolCorrespondencesInToolStorage = std::vector<int>();
         //add the tools to the tracking device
         for (unsigned int i = 0; i < navigationTools->GetToolCount(); i++)
